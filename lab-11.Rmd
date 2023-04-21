@@ -1,7 +1,7 @@
 ---
 title: "Lab 11 - Smoking during pregnancy"
-author: "Insert your name here"
-date: "Insert date here"
+author: "Lindsay Stall"
+date: "4/3/23"
 output: github_document
 ---
 
@@ -11,17 +11,135 @@ output: github_document
 library(tidyverse) 
 library(tidymodels)
 library(openintro)
+library(skimr)
+library(infer)
 ```
+
+```{r}
+library(usethis)
+use_git_config(user.name = "Lindsay Stall", 
+               user.email = "stallm21@wfu.edu")
+```
+
+
 
 ### Exercise 1
 
-Remove this text, and add your answer for Exercise 1 here.
-Add code chunks as needed.
-Don't forget to label your code chunk.
-Do not use spaces in code chunk labels.
+```{r}
+data(ncbirths)
+```
+
+```{r}
+summary(ncbirths)
+```
+The cases are babies, and there are 1000 cases.
 
 ### Exercise 2
 
-...
+```{r}
+ncbirths_white <- ncbirths %>%
+  filter(whitemom == "white")
+```
 
-Add exercise headings as needed.
+```{r}
+mean(ncbirths_white$weight)
+
+```
+The mean white of babies born to white mother is 7.25
+
+### Exercise 3
+
+Yes? I believe so.
+
+```{r}
+boot_df_weight <- ncbirths_white %>%
+  specify(response = weight) %>% 
+  generate(reps = 1000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+boot_df_weight <- boot_df_weight %>% 
+  mutate(stat = (stat + (7.43-mean(ncbirths_white$weight))))
+
+boot_df_weight %>% 
+  ggplot(aes(x = stat)) +
+  geom_histogram(color = "black",fill = "magenta", alpha = 0.5) +
+  xlab("weight")
+
+sum((boot_df_weight$stat <= (mean(ncbirths_white$weight))) / length(boot_df_weight$stat)) +
+sum((boot_df_weight$stat >= (7.43+(7.43-mean(ncbirths_white$weight)))) / length(boot_df_weight$stat))
+```
+
+
+### Exercise 4
+For a two-tailed test we would get a p-value of 0.002, which means there has been a significant change.
+
+
+### Exercise 5
+
+```{r}
+
+ncbirths<-ncbirths %>% drop_na(habit)
+```
+
+
+```{r}
+ggplot(ncbirths, aes(habit, weight, fill=habit)) +
+  geom_bar(stat="summary") +
+  xlab("Smoking Habit") + ylab("Baby Weight (lbs)") +
+  scale_fill_brewer(palette = "Accent") +
+  ggtitle("Birth Weights of Infants by Mother's Smoking Habit")
+  theme(legend.position="none")
+```
+
+Smoker's babies weigh less
+
+
+### Exercise 7
+
+The null hypothesis would be that there is no difference in weight for babies with mothers that do or do not smoke.
+
+```{r}
+ncbirths_habit<- ncbirths %>%
+  subset(select=c(weight, habit))
+```
+
+### Exercise 8 
+Yes, I believe so (though honestly could use clarification)
+
+```{r}
+boot_df_smoker <- ncbirths_habit %>% 
+  filter(habit == "smoker") %>%
+  specify(response = weight) %>% 
+  generate(reps = 1000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+
+boot_df_nonsmoker <- ncbirths_habit %>% 
+  filter(habit == "nonsmoker") %>%
+  specify(response = weight) %>% 
+  generate(reps = 1000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+boot_df_diff <- (boot_df_nonsmoker$stat-boot_df_smoker$stat) %>% 
+  as.data.frame() %>% 
+  setNames("MeanDiff")
+
+boot_df_diff_c <- (boot_df_diff$MeanDiff - mean(boot_df_diff$MeanDiff)) %>% 
+  as.data.frame() %>% 
+  setNames("MeanDiff")
+
+sum((boot_df_diff_c$MeanDiff >= mean(boot_df_diff$MeanDiff))/length(boot_df_diff_c$MeanDiff)) +
+sum((boot_df_diff_c$MeanDiff <= (mean(boot_df_diff$MeanDiff)*-1))/length(boot_df_diff_c$MeanDiff))
+```
+
+The p-value is 0.01, so there is a difference in birth weight of babies whose mothers smokes versus don't smoke.
+
+### Exercise 10
+
+
+
+
+
+
+
+
